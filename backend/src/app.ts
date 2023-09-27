@@ -6,9 +6,17 @@ import createHttpError, { isHttpError } from "http-errors";
 import session from "express-session";
 import env from "./util/validateEnv";
 import MongoStore from "connect-mongo";
+import cors from "cors";
 
 const app = express();
 
+// const corsOpts = {
+//     origin: '*',
+//     credentials: false,
+//     methods: ['GET', 'POST', 'HEAD', 'PUT', 'PATCH', 'DELETE'],
+//     allowedHeaders: ['Content-Type'],
+//     exposedHeaders: ['Content-Type']
+// };
 
 // Log Handler
 app.use(morgan('dev'));
@@ -27,6 +35,10 @@ app.use(session({
     rolling: true,
     store: MongoStore.create({ mongoUrl: env.MONGODB_URL })
 }));
+
+// Cors Middleware
+// app.use(cors(corsOpts));
+app.use(cors());
 
 // Routes
 app.use("/api/users", loginRoutes);

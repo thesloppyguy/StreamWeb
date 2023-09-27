@@ -1,12 +1,16 @@
 import * as ProfileController from "../controllers/login"
+import { requiresAuth } from "../middleware/auth";
 import express from "express";
 
 const router = express.Router();
 
-router.get('/', ProfileController.getProfiles);
-router.get('/:id', ProfileController.getProfile);
+router.get('/', requiresAuth, ProfileController.getAuthenticatedUser);
+
 router.post('/signup', ProfileController.createProfile);
-router.patch('/:id', ProfileController.updateProfile);
-router.delete('/:id', ProfileController.deleteProfile);
+
+router.post('/login', ProfileController.loginProfile);
+
+router.post('/logout', ProfileController.logout);
+
 
 export default router;

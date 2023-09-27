@@ -22,6 +22,11 @@ interface UpdateProfileBody {
 }
 
 
+interface LoginBody {
+    email?: string,
+    password?: string
+}
+
 export const getProfiles: RequestHandler = async (req, res, next) => {
     try {
         const profiles = await profileModel.find().exec();
@@ -112,4 +117,51 @@ export const deleteProfile: RequestHandler = async (req, res, next) => {
     catch (error) {
         next(error);
     }
+}
+
+export const loginProfile: RequestHandler<unknown, unknown, LoginBody, unknown> = async (req, res, next) => {
+    const email = req.body.email;
+    const password = req.body.password;
+    try {
+        if (!email || !password) {
+            throw createHttpError(400, "Parameters Missing");
+        }
+        const user = await profileModel.findOne({ email: email }).select("+password +email").exec();
+
+        if (!user) {
+            throw createHttpError(401, "Invalid Credentials");
+        }
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+            throw createHttpError(401, "Invalid Credentials");
+        }
+        req.session.userId = user._id;
+        res.status(201).json(user);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const getAuthenticatedUser: RequestHandler = async (req, res, next) => {
+    const authenticatedUser = req.session.userId;
+    console.log(req.session.userId);
+    try {
+        if (!authenticatedUser) {
+            throw createHttpError(401, "User not authenticated");
+        }
+        const user = await profileModel.findById(authenticatedUser).select("+email").exec();
+        res.status(200).json(user);
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const logout: RequestHandler = (req, res, next) => {
+    req.session.destroy(error => {
+        if (error) {
+            next(error);
+        } else {
+            res.sendStatus(200);
+        }
+    })
 }
